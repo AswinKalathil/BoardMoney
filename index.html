@@ -50,7 +50,8 @@ function toast(t){const e=$('#toast');e.textContent=t;e.style.display='block';cl
 const bal=g=>{const b={};g.players.forEach(p=>b[p.id]=0);g.tx.forEach(t=>{b[t.from]-=t.amt;b[t.to]+=t.amt});return b};
 const ranked=g=>{const b=bal(g),a=g.players.map(p=>({...p,b:b[p.id],c:COL[g.players.indexOf(p)]})).sort((x,y)=>y.b-x.b);a.forEach((p,i)=>p.r=i&&p.b===a[i-1].b?a[i-1].r:i+1);return a};
 function settle(g){const b=bal(g),d=[],c=[];g.players.forEach(p=>{b[p.id]<0?d.push({n:p.name,a:-b[p.id]}):b[p.id]>0&&c.push({n:p.name,a:b[p.id]})});d.sort((x,y)=>y.a-x.a);c.sort((x,y)=>y.a-x.a);const r=[];let i=0,j=0;while(i<d.length&&j<c.length){const m=Math.min(d[i].a,c[j].a);r.push([d[i].n,c[j].n,m]);d[i].a-=m;c[j].a-=m;if(!d[i].a)i++;if(!c[j].a)j++}return r}
-function chime(){if(!S.sound)return;try{const C=new(window.AudioContext||window.webkitAudioContext)(),t=C.currentTime;[523.25,659.25,783.99,1046.5].forEach((fr,i)=>{const o=C.createOscillator(),g=C.createGain();o.type='sine';o.frequency.value=fr;g.gain.setValueAtTime(0,t+i*.12);g.gain.linearRampToValueAtTime(.18,t+i*.12+.02);g.gain.exponentialRampToValueAtTime(.001,t+(i===3?1:.5));o.connect(g).connect(C.destination);o.start(t+i*.12);o.stop(t+1.02)})}catch(e){}}
+const transferSound=new Audio('sounds/transfer.wav');
+function chime(){if(!S.sound)return;try{transferSound.currentTime=0;const play=transferSound.play();if(play)play.catch(()=>{})}catch(e){}}
 /* ---------- views ---------- */
 function home(){const l=Object.values(G).sort((a,b)=>b.updated-a.updated);return`<div style="text-align:center;padding:24px 0 8px"><div class="logo">BoardMoney</div><div class="mut">Track coin transfers in card games</div></div>
 <div class="row wrap" style="margin:16px 0"><button class="btn p fl" data-act="create">Create New Game</button><button class="btn fl" data-act="join">Join Existing Game</button></div>
