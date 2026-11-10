@@ -1,0 +1,148 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>BoardMoney</title>
+<style>
+:root{--bg:#0d1117;--card:#161b26;--c2:#1e2535;--tx:#e8ecf4;--mut:#8b95a9;--acc:#7c5cff;--pos:#3ddc97;--neg:#ff5d6c;--bd:#2a3347;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#f4f6fb;--card:#fff;--c2:#eef1f8;--tx:#161b26;--mut:#5b6579;--bd:#d9dfec;--pos:#0f9d63;--neg:#d62f42;color-scheme:light}}
+:root[data-theme="dark"]{--bg:#0d1117;--card:#161b26;--c2:#1e2535;--tx:#e8ecf4;--mut:#8b95a9;--bd:#2a3347;--pos:#3ddc97;--neg:#ff5d6c;color-scheme:dark}
+:root[data-theme="light"]{--bg:#f4f6fb;--card:#fff;--c2:#eef1f8;--tx:#161b26;--mut:#5b6579;--bd:#d9dfec;--pos:#0f9d63;--neg:#d62f42;color-scheme:light}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;overflow-x:hidden}
+#app{max-width:760px;margin:0 auto;padding:14px 14px 60px}
+h1,h2,h3{margin:0}h2{font-size:15px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;margin:22px 0 10px}
+.card{background:linear-gradient(160deg,var(--card),var(--c2));border:1px solid var(--bd);border-radius:16px;padding:14px;box-shadow:0 6px 20px #0004}
+button,input,select{font:inherit;color:inherit}
+.btn{min-height:48px;padding:0 18px;border-radius:12px;border:1px solid var(--bd);background:var(--c2);cursor:pointer;font-weight:600}
+.btn.p{background:linear-gradient(135deg,#7c5cff,#4f8cff);border:0;color:#fff}.btn.d{color:var(--neg)}.btn:disabled{opacity:.4}
+.btn.s{min-height:38px;padding:0 12px;font-size:14px}
+input,select{width:100%;min-height:48px;border-radius:12px;border:1px solid var(--bd);background:var(--bg);padding:0 12px}
+.row{display:flex;gap:8px;align-items:center}.row>*{min-width:0}.fl{flex:1}.wrap{flex-wrap:wrap}
+.mut{color:var(--mut);font-size:13px}.chip{font-size:12px;padding:3px 10px;border-radius:99px;background:var(--c2);border:1px solid var(--bd)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.pc{padding:12px;border-radius:16px;background:linear-gradient(160deg,var(--card),var(--c2));border:2px solid var(--bd);cursor:grab;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;transition:transform .15s,border-color .15s,box-shadow .15s}
+.pc.src{opacity:.55;transform:scale(.96)}.pc.tgt{border-color:var(--pos);box-shadow:0 0 0 4px #3ddc9733;transform:scale(1.04)}.pc.sel{border-color:var(--acc)}
+.av{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-weight:700;color:#fff;flex:none}
+.bal{font-size:20px;font-weight:700;margin-top:8px}.pos{color:var(--pos)}.neg{color:var(--neg)}.zero{color:var(--mut)}
+.lb{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--bd)}.lb:last-child{border:0}
+.rk{width:26px;text-align:center;font-weight:700;color:var(--mut)}
+#arrow{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:50}
+#modal:not(:empty){position:fixed;inset:0;background:#000a;z-index:60;display:flex;align-items:flex-end;justify-content:center}
+.sheet{width:100%;max-width:440px;max-height:92vh;overflow:auto;background:var(--card);border:1px solid var(--bd);border-radius:20px 20px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px))}
+.kp{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}.kp button{min-height:58px;font-size:22px}
+.amt{font-size:38px;font-weight:800;text-align:center;padding:8px 0;word-break:break-all}
+.hd{padding:10px 0;border-bottom:1px solid var(--bd)}svg text{fill:var(--mut);font-size:9px}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--acc);color:#fff;padding:10px 16px;border-radius:12px;z-index:90;display:none}
+.logo{font-size:30px;font-weight:900;background:linear-gradient(135deg,#7c5cff,#3ddc97);-webkit-background-clip:text;background-clip:text;color:transparent}
+textarea{width:100%;height:140px;background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:12px;padding:8px}
+</style></head><body><div id="app"></div><div id="modal"></div><svg id="arrow" style="display:none"><defs><marker id="ah" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#7c5cff"/></marker></defs><line id="al" stroke="#7c5cff" stroke-width="5" stroke-linecap="round" marker-end="url(#ah)"/></svg><div id="toast"></div>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const COL=['#7c5cff','#3ddc97','#ff9f43','#ff5d6c','#4fc3f7','#f368e0','#feca57','#1dd1a1','#a29bfe','#ff7675'];
+let G={},mem={};try{G=JSON.parse(localStorage.getItem('bm')||'{}')}catch(e){}
+const save=()=>{try{localStorage.setItem('bm',JSON.stringify(G))}catch(e){mem=G}};
+let S={page:'home',gid:null,draft:null,sel:null,ci:null,hide:{},filter:'all',j:{},sound:true},M=null,drag=null,busy=false;
+let TH='auto';try{TH=localStorage.getItem('bmt')||'auto'}catch(e){}
+const applyTheme=()=>{TH==='auto'?document.documentElement.removeAttribute('data-theme'):document.documentElement.setAttribute('data-theme',TH);try{localStorage.setItem('bmt',TH)}catch(e){}};applyTheme();
+const themeSel=()=>`<select data-act="theme">${[['auto','Theme: Auto (device)'],['dark','Theme: Dark'],['light','Theme: Light']].map(o=>`<option value="${o[0]}" ${TH===o[0]?'selected':''}>${o[1]}</option>`).join('')}</select>`;
+const cur=()=>G[S.gid],f=n=>n+' coins',sg=n=>(n>0?'+':'')+n+' coins',cls=n=>n>0?'pos':n<0?'neg':'zero';
+const ini=n=>n.trim().split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase()||'?';
+const uid=()=>crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2);
+async function hash(s){try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}catch(e){let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))|0;return'x'+h}}
+function toast(t){const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(toast.t);toast.t=setTimeout(()=>e.style.display='none',2200)}
+const bal=g=>{const b={};g.players.forEach(p=>b[p.id]=0);g.tx.forEach(t=>{b[t.from]-=t.amt;b[t.to]+=t.amt});return b};
+const ranked=g=>{const b=bal(g),a=g.players.map(p=>({...p,b:b[p.id],c:COL[g.players.indexOf(p)]})).sort((x,y)=>y.b-x.b);a.forEach((p,i)=>p.r=i&&p.b===a[i-1].b?a[i-1].r:i+1);return a};
+function settle(g){const b=bal(g),d=[],c=[];g.players.forEach(p=>{b[p.id]<0?d.push({n:p.name,a:-b[p.id]}):b[p.id]>0&&c.push({n:p.name,a:b[p.id]})});d.sort((x,y)=>y.a-x.a);c.sort((x,y)=>y.a-x.a);const r=[];let i=0,j=0;while(i<d.length&&j<c.length){const m=Math.min(d[i].a,c[j].a);r.push([d[i].n,c[j].n,m]);d[i].a-=m;c[j].a-=m;if(!d[i].a)i++;if(!c[j].a)j++}return r}
+function chime(){if(!S.sound)return;try{const C=new(window.AudioContext||window.webkitAudioContext)(),t=C.currentTime;[523.25,659.25,783.99,1046.5].forEach((fr,i)=>{const o=C.createOscillator(),g=C.createGain();o.type='sine';o.frequency.value=fr;g.gain.setValueAtTime(0,t+i*.12);g.gain.linearRampToValueAtTime(.18,t+i*.12+.02);g.gain.exponentialRampToValueAtTime(.001,t+(i===3?1:.5));o.connect(g).connect(C.destination);o.start(t+i*.12);o.stop(t+1.02)})}catch(e){}}
+/* ---------- views ---------- */
+function home(){const l=Object.values(G).sort((a,b)=>b.updated-a.updated);return`<div style="text-align:center;padding:24px 0 8px"><div class="logo">BoardMoney</div><div class="mut">Track coin transfers in card games</div></div>
+<div class="row wrap" style="margin:16px 0"><button class="btn p fl" data-act="create">Create New Game</button><button class="btn fl" data-act="join">Join Existing Game</button></div>
+<h2>Recently played (this device)</h2>${l.length?l.map(g=>`<div class="card row" style="margin-bottom:8px;cursor:pointer" data-act="open" data-id="${g.id}"><div class="fl"><b>${esc(g.name)}</b><div class="mut">#${g.id} · ${g.players.length} players · ${g.tx.length} transfers</div></div><span class="chip">${g.status}</span></div>`).join(''):'<div class="mut">No games yet.</div>'}
+<h2>Settings</h2>${themeSel()}<div style="height:10px"></div><label class="row"><input type="checkbox" data-act="snd" ${S.sound?'checked':''} style="width:24px;min-height:24px"> Transfer sound</label>
+<p class="mut">Local mode: games are saved in this browser only. GitHub-based cross-device sync is not part of this build.</p>`}
+function create(){const d=S.draft;return`<div class="row"><button class="btn s" data-act="home">‹ Back</button><h3>New game</h3></div>
+<h2>Game name</h2><input data-f="name" value="${esc(d.name)}" placeholder="Friday poker">
+<h2>Players (${d.players.length}/10)</h2>${d.players.map((p,i)=>`<div class="row" style="margin-bottom:8px"><div class="av" style="background:${COL[i]}">${ini(p)}</div><input data-pi="${i}" value="${esc(p)}" placeholder="Player ${i+1}"><button class="btn s" data-act="up" data-i="${i}">↑</button><button class="btn s d" data-act="delp" data-i="${i}">✕</button></div>`).join('')}
+<button class="btn" data-act="addp" ${d.players.length>=10?'disabled':''}>+ Add player</button>
+<h2>Passkey</h2><input data-f="pass" value="${esc(d.pass)}" placeholder="At least 4 characters"><div style="height:16px"></div><button class="btn p" style="width:100%" data-act="mk">Create game</button>`}
+function join(){return`<div class="row"><button class="btn s" data-act="home">‹ Back</button><h3>Join game</h3></div><h2>Game number</h2><input data-j="id" inputmode="numeric" value="${esc(S.j.id||'')}"><h2>Passkey</h2><input data-j="pass" type="password" value="${esc(S.j.pass||'')}"><div style="height:16px"></div><button class="btn p" style="width:100%" data-act="dojoin">Join</button><p class="mut">Looks up games saved on this device.</p>`}
+function room(){const g=cur(),r=ranked(g),rk={};r.forEach(p=>rk[p.id]=p.r);const act=g.status==='active',b=bal(g);
+const hist=[...g.tx].reverse().filter(t=>S.filter==='all'||t.from===S.filter||t.to===S.filter),nm=id=>esc(g.players.find(p=>p.id===id).name);
+return`<div class="card"><div class="row"><div class="fl"><div class="logo" style="font-size:20px">BoardMoney</div><b>${esc(g.name)}</b> <span class="mut">#${g.id}</span></div><button class="btn s" data-act="home">Home</button></div>
+<div class="row wrap" style="margin-top:8px"><span class="chip">${act?'● Active':'Ended'}</span><span class="chip">💾 Saved on this device</span><div class="fl"></div><button class="btn s" data-act="share">Share</button><button class="btn s" data-act="settings">⚙</button>${act?'<button class="btn s d" data-act="end">End</button>':''}</div></div>
+${act?'':`<h2>Final settlement</h2><div class="card">${settle(g).map(s=>`<div class="hd"><b>${esc(s[0])}</b> pays <b>${esc(s[1])}</b> ${f(s[2])}</div>`).join('')||'All settled.'}</div>`}
+<h2>Players</h2><div class="grid">${g.players.map((p,i)=>`<div class="pc ${S.sel===p.id?'sel':''}" data-id="${p.id}"><div class="row"><div class="av" style="background:${COL[i]}">${ini(p.name)}</div><div class="fl"><b style="overflow-wrap:anywhere">${esc(p.name)}</b></div><span class="chip">#${rk[p.id]}</span></div><div class="bal ${cls(b[p.id])}">${f(b[p.id])}</div></div>`).join('')}</div>
+<h2>Transfer</h2><div class="card mut" style="text-align:center">${!act?'Game ended. Transfers are locked.':S.sel?`Tap the receiver for <b>${nm(S.sel)}</b> <button class="btn s" data-act="csel">Cancel</button>`:'Press and hold a card, drag it onto another player. Or tap two cards.'}</div>
+<h2>Leaderboard</h2><div class="card">${r.map(p=>`<div class="lb"><div class="rk">${p.r}</div><div class="av" style="background:${p.c};width:30px;height:30px;font-size:12px">${ini(p.name)}</div><div class="fl">${esc(p.name)} ${p.r===1&&g.tx.length&&p.b>0?'👑':''}</div><b class="${cls(p.b)}">${f(p.b)}</b></div>`).join('')}</div>
+<h2>Balance progression</h2><div class="card"><div id="chart"></div></div>
+<h2>History</h2><select data-act="flt"><option value="all">All players</option>${g.players.map(p=>`<option value="${p.id}" ${S.filter===p.id?'selected':''}>${esc(p.name)}</option>`).join('')}</select>
+<div class="card" style="margin-top:8px">${hist.map(t=>`<details class="hd"><summary><b>T${t.seq}</b> ${nm(t.from)} → ${nm(t.to)} · <b>${f(t.amt)}</b>${t.rev?' <span class="chip">reversal</span>':''}</summary><div class="mut" style="padding:8px 0">${new Date(t.ts).toLocaleString()}<br>ID ${t.id.slice(0,8)}${t.rev?'<br>Reverses an earlier transfer':''}</div>${act&&!t.rev&&!g.tx.some(x=>x.rev===t.id)?`<button class="btn s" data-act="rev" data-id="${t.id}">Reverse transfer</button>`:''}</details>`).join('')||'<span class="mut">No transfers yet.</span>'}</div>`}
+function drawChart(){const g=cur(),el=$('#chart');if(!el)return;const n=g.tx.length,ser=g.players.map((p,i)=>({p,c:COL[i],v:[0]}));
+g.tx.forEach(t=>ser.forEach(s=>{s.v.push(s.v[s.v.length-1]+(t.to===s.p.id?t.amt:0)-(t.from===s.p.id?t.amt:0))}));
+const vis=ser.filter(s=>!S.hide[s.p.id]);let mn=0,mx=0;vis.forEach(s=>s.v.forEach(x=>{mn=Math.min(mn,x);mx=Math.max(mx,x)}));if(mn===mx){mn=-1;mx=1}
+const W=340,H=200,L=42,R=10,T=10,B=22,X=i=>L+(n?i/n:0)*(W-L-R),Y=v=>T+(mx-v)/(mx-mn)*(H-T-B),ci=S.ci==null||S.ci>n?n:S.ci;
+el.innerHTML=`<div class="row wrap" style="margin-bottom:8px">${ser.map(s=>`<button class="chip" data-act="tgl" data-id="${s.p.id}" style="cursor:pointer;opacity:${S.hide[s.p.id]?.4:1};border-color:${s.c}"><span style="color:${s.c}">●</span> ${esc(s.p.name)}</button>`).join('')}</div>
+<svg id="cs" viewBox="0 0 ${W} ${H}" width="100%" style="touch-action:pan-y;display:block"><line x1="${L}" x2="${W-R}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--mut)" stroke-dasharray="4 3"/>
+<text x="${L-4}" y="${Y(mx)+3}" text-anchor="end">${mx}</text><text x="${L-4}" y="${Y(0)+3}" text-anchor="end">0</text><text x="${L-4}" y="${Y(mn)+3}" text-anchor="end">${mn}</text>
+<text x="${L}" y="${H-6}">Start</text><text x="${W-R}" y="${H-6}" text-anchor="end">T${n}</text>
+${n?`<line x1="${X(ci)}" x2="${X(ci)}" y1="${T}" y2="${H-B}" stroke="var(--bd)"/>`:`<text x="${W/2}" y="${H/2-14}" text-anchor="middle">No transfers yet</text>`}
+${vis.map(s=>`<polyline fill="none" stroke="${s.c}" stroke-width="2.5" stroke-linejoin="round" points="${s.v.map((v,i)=>X(i)+','+Y(v)).join(' ')}"/><circle cx="${X(ci)}" cy="${Y(s.v[ci])}" r="4" fill="${s.c}"/>`).join('')}</svg>
+<div class="mut" style="margin:6px 0">${ci?'After T'+ci:'Start'} — tap or hover the graph</div>${vis.map(s=>`<div class="row"><span style="color:${s.c}">●</span><span class="fl">${esc(s.p.name)}</span><b class="${cls(s.v[ci])}">${f(s.v[ci])}</b></div>`).join('')}`}
+function render(){const a=$('#app');a.innerHTML=({home,create,join,room})[S.page]();if(S.page==='room')drawChart();renderM()}
+function renderM(){const m=$('#modal');if(!M){m.innerHTML='';return}const g=cur();let h='';
+if(M.t==='tx'){const nm=id=>esc(g.players.find(p=>p.id===id).name);
+if(M.step==='key')h=`<div class="row"><b class="fl">${nm(M.from)} → ${nm(M.to)}</b><button class="btn s" data-act="close">Cancel</button></div><div class="amt">${M.amt||'0'} coins</div><div class="kp">${[1,2,3,4,5,6,7,8,9].map(k=>`<button class="btn" data-act="key" data-k="${k}">${k}</button>`).join('')}<button class="btn" data-act="key" data-k="C">Clear</button><button class="btn" data-act="key" data-k="0">0</button><button class="btn" data-act="key" data-k="B">⌫</button></div><button class="btn p" style="width:100%" data-act="done" ${+M.amt>0?'':'disabled'}>Done</button>`;
+else h=`<h3>Confirm transfer</h3><div class="card" style="margin:12px 0"><div class="hd">Sender: <b>${nm(M.from)}</b></div><div class="hd">Receiver: <b>${nm(M.to)}</b></div><div style="padding-top:10px">Amount: <b>${f(+M.amt)}</b></div></div><div class="row"><button class="btn fl" data-act="close">Cancel</button><button class="btn p fl" data-act="done" ${busy?'disabled':''}>Done</button></div>`}
+else if(M.t==='settings')h=`<h3>Settings</h3><h2>Rename game</h2><input data-f="rename" value="${esc(g.name)}">${themeSel()}<label class="row" style="margin:12px 0"><input type="checkbox" data-act="snd" ${S.sound?'checked':''} style="width:24px;min-height:24px">Transfer sound</label><div class="row wrap"><button class="btn" data-act="share">Share credentials</button><button class="btn" data-act="csv">Export history</button></div><h2>Summary</h2><div class="mut">${g.tx.length} transfers · v${g.version} · created ${new Date(g.created).toLocaleDateString()}</div><div style="height:12px"></div><button class="btn p" style="width:100%" data-act="close">Close</button>`;
+else if(M.t==='end')h=`<h3>End game?</h3><p class="mut">This locks all transfers and shows the final settlement. It cannot be undone.</p><div class="row"><button class="btn fl" data-act="close">Cancel</button><button class="btn d fl" data-act="endgo">End game</button></div>`;
+else if(M.t==='share')h=`<h3>Game credentials</h3><div class="card amt" style="font-size:22px">Game #${g.id}<br>Passkey: ${esc(M.pass||'(hidden – shown only when created)')}</div><div class="row"><button class="btn p fl" data-act="copy">Copy / Share</button><button class="btn fl" data-act="close">Close</button></div>`;
+else if(M.t==='csv')h=`<h3>Export</h3><textarea readonly>${esc(M.text)}</textarea><div class="row" style="margin-top:8px"><button class="btn p fl" data-act="copytxt">Copy</button><button class="btn fl" data-act="close">Close</button></div>`;
+m.innerHTML=`<div class="sheet">${h}</div>`}
+/* ---------- actions ---------- */
+async function mk(){const d=S.draft,names=d.players.map(s=>s.trim());
+if(!d.name.trim())return toast('Enter a game name');if(names.some(n=>!n)||new Set(names.map(n=>n.toLowerCase())).size<names.length)return toast('Player names must be filled and unique');if(d.pass.length<4)return toast('Passkey needs 4+ characters');
+let id;do id=String(100000+Math.floor(Math.random()*900000));while(G[id]);
+const now=Date.now();G[id]={id,name:d.name.trim(),hash:await hash(id+':'+d.pass),status:'active',players:names.map(n=>({id:uid(),name:n})),tx:[],created:now,updated:now,version:1};save();S.gid=id;S.page='room';S.ci=null;render();M={t:'share',pass:d.pass};renderM()}
+function openTx(from,to){if(from===to||cur().status!=='active')return;S.sel=null;M={t:'tx',from,to,amt:'',step:'key'};render()}
+function commit(){if(busy||!M||M.t!=='tx')return;const a=+M.amt;if(!(a>0))return;busy=true;const g=cur();
+g.tx.push({id:uid(),seq:g.tx.length+1,from:M.from,to:M.to,amt:a,ts:Date.now(),rev:null});g.version++;g.updated=Date.now();save();busy=false;M=null;S.ci=null;chime();render();toast('Transfer recorded')}
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act,g=cur();
+if(a==='flt'||a==='theme'||(a==='snd'&&b.type==='checkbox'))return;
+if(a==='home'){S.page='home';S.sel=null;M=null}
+else if(a==='create'){S.draft={name:'',pass:'',players:['','']};S.page='create'}
+else if(a==='join'){S.j={};S.page='join'}
+else if(a==='open'){S.gid=b.dataset.id;S.page='room';S.ci=null}
+else if(a==='addp'){if(S.draft.players.length<10)S.draft.players.push('')}
+else if(a==='delp'){if(S.draft.players.length>2)S.draft.players.splice(+b.dataset.i,1);else toast('Minimum 2 players')}
+else if(a==='up'){const i=+b.dataset.i,p=S.draft.players;if(i>0)[p[i-1],p[i]]=[p[i],p[i-1]]}
+else if(a==='mk')return mk();
+else if(a==='dojoin'){const x=G[(S.j.id||'').trim()];if(!x||x.hash!==await hash(x.id+':'+(S.j.pass||'')))return toast('Wrong game number or passkey');S.gid=x.id;S.page='room';S.ci=null}
+else if(a==='csel')S.sel=null;
+else if(a==='tgl'){S.hide[b.dataset.id]=!S.hide[b.dataset.id];return drawChart()}
+else if(a==='rev'){const t=g.tx.find(x=>x.id===b.dataset.id);g.tx.push({id:uid(),seq:g.tx.length+1,from:t.to,to:t.from,amt:t.amt,ts:Date.now(),rev:t.id});g.version++;g.updated=Date.now();save();S.ci=null;chime()}
+else if(a==='share')M={t:'share',pass:M&&M.pass};
+else if(a==='settings')M={t:'settings'};else if(a==='end')M={t:'end'};
+else if(a==='endgo'){g.status='ended';g.version++;g.updated=Date.now();save();M=null}
+else if(a==='close'){M=null}
+else if(a==='key'){const k=b.dataset.k;if(k==='C')M.amt='';else if(k==='B')M.amt=M.amt.slice(0,-1);else if(M.amt.length<9)M.amt=String(+(M.amt+k)||'');return renderM()}
+else if(a==='add'){if(+M.amt>0)M.step='confirm';return renderM()}
+else if(a==='done')return commit();
+else if(a==='csv'){M={t:'csv',text:'seq,time,from,to,coins,reversal\n'+g.tx.map(t=>[t.seq,new Date(t.ts).toISOString(),g.players.find(p=>p.id===t.from).name,g.players.find(p=>p.id===t.to).name,t.amt,t.rev?'yes':''].join(',')).join('\n')}}
+else if(a==='copy'){const t=`BoardMoney game #${g.id}`+(M.pass?` passkey: ${M.pass}`:'');try{navigator.share?await navigator.share({text:t}):await navigator.clipboard.writeText(t);toast('Copied')}catch(x){toast('Copy not available')}return}
+else if(a==='copytxt'){try{await navigator.clipboard.writeText(M.text);toast('Copied')}catch(x){toast('Select the text to copy')}return}
+render()});
+document.addEventListener('change',e=>{const t=e.target;if(t.dataset.act==='flt'){S.filter=t.value;render()}if(t.dataset.act==='theme'){TH=t.value;applyTheme();render()}if(t.dataset.act==='snd'){S.sound=t.checked;render()}if(t.dataset.f==='rename'&&t.value.trim()){cur().name=t.value.trim();save();render();renderM()}});
+document.addEventListener('input',e=>{const t=e.target;if(t.dataset.f==='name')S.draft.name=t.value;if(t.dataset.f==='pass')S.draft.pass=t.value;if(t.dataset.pi!=null)S.draft.players[+t.dataset.pi]=t.value;if(t.dataset.j)S.j[t.dataset.j]=t.value});
+/* ---------- drag & tap ---------- */
+const cardAt=(x,y)=>{const el=document.elementFromPoint(x,y);return el&&el.closest('.pc')};
+const ctr=id=>{const r=document.querySelector(`.pc[data-id="${id}"]`).getBoundingClientRect();return[r.left+r.width/2,r.top+r.height/2]};
+function startDrag(){drag.on=true;document.querySelector(`.pc[data-id="${drag.id}"]`).classList.add('src');$('#arrow').style.display='block';navigator.vibrate&&navigator.vibrate(15)}
+function mv(e){const[cx,cy]=ctr(drag.id),l=$('#al');l.setAttribute('x1',cx);l.setAttribute('y1',cy);l.setAttribute('x2',e.clientX);l.setAttribute('y2',e.clientY);
+document.querySelectorAll('.pc.tgt').forEach(c=>c.classList.remove('tgt'));const c=cardAt(e.clientX,e.clientY);drag.to=c&&c.dataset.id!==drag.id?c.dataset.id:null;if(drag.to)c.classList.add('tgt')}
+$('#app').addEventListener('pointerdown',e=>{const c=e.target.closest('.pc');if(!c||S.page!=='room'||cur().status!=='active')return;
+drag={id:c.dataset.id,x:e.clientX,y:e.clientY,on:false,touch:e.pointerType!=='mouse'};if(drag.touch)drag.t=setTimeout(()=>{if(drag){startDrag();mv({clientX:drag.x,clientY:drag.y})}},230)});
+addEventListener('pointermove',e=>{if(!drag)return;if(!drag.on){const d=Math.hypot(e.clientX-drag.x,e.clientY-drag.y);if(!drag.touch&&d>8){startDrag();mv(e)}else if(drag.touch&&d>10){clearTimeout(drag.t);drag=null}return}mv(e)});
+addEventListener('touchmove',e=>{if(drag&&drag.on)e.preventDefault()},{passive:false});
+function endDrag(ok){if(!drag)return;clearTimeout(drag.t);const d=drag;drag=null;$('#arrow').style.display='none';document.querySelectorAll('.src,.tgt').forEach(c=>c.classList.remove('src','tgt'));if(!ok)return;
+if(d.on){if(d.to)openTx(d.id,d.to)}else{if(!S.sel)S.sel=d.id;else if(S.sel===d.id)S.sel=null;else return openTx(S.sel,d.id);render()}}
+addEventListener('pointerup',()=>endDrag(true));addEventListener('pointercancel',()=>endDrag(false));
+const cp=e=>{const s=e.target.closest&&e.target.closest('#cs');if(!s)return;const r=s.getBoundingClientRect(),n=cur().tx.length;S.ci=Math.max(0,Math.min(n,Math.round(((e.clientX-r.left)/r.width*340-42)/288*n)));drawChart()};
+document.addEventListener('pointerdown',cp);document.addEventListener('pointermove',cp);
+render();
+</script></body></html>
